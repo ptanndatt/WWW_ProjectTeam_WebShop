@@ -1,9 +1,32 @@
 import { Link } from "react-router-dom";
-import { mockProducts } from "../../data/mockProducts";
+import { useEffect, useState } from "react";
 import ProductCard from "../../components/common/ProductCard";
+import { getAllProducts, getAllCategories } from "../../services/productService";
 
 export default function HomePage() {
-  const featuredProducts = mockProducts.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        const [productData, categoryData] = await Promise.all([
+          getAllProducts(),
+          getAllCategories(),
+        ]);
+
+        const products = Array.isArray(productData) ? productData : [];
+        const categoryList = Array.isArray(categoryData) ? categoryData : [];
+
+        setFeaturedProducts(products.slice(0, 4));
+        setCategories(categoryList.slice(0, 4));
+      } catch (error) {
+        console.error("Lỗi lấy dữ liệu trang chủ:", error);
+      }
+    };
+
+    fetchHomeData();
+  }, []);
 
   return (
     <div className="container py-4">
@@ -22,45 +45,25 @@ export default function HomePage() {
         <h2 className="section-title">Danh mục nổi bật</h2>
 
         <div className="row g-4">
-          <div className="col-lg-3 col-md-6">
-            <div className="category-box">
-              <div className="category-icon">💻</div>
-              <h4>Máy tính</h4>
-              <p className="text-muted mb-0">
-                Laptop, PC, phụ kiện công nghệ dành cho học tập và làm việc.
-              </p>
+          {categories.length > 0 ? (
+            categories.map((category, index) => (
+              <div className="col-lg-3 col-md-6" key={category.id}>
+                <div className="category-box">
+                  <div className="category-icon">
+                    {["💻", "💄", "👕", "📚"][index % 4]}
+                  </div>
+                  <h4>{category.name}</h4>
+                  <p className="text-muted mb-0">
+                    {category.description || "Danh mục sản phẩm nổi bật của cửa hàng."}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-12">
+              <div className="empty-box">Chưa có danh mục nổi bật.</div>
             </div>
-          </div>
-
-          <div className="col-lg-3 col-md-6">
-            <div className="category-box">
-              <div className="category-icon">💄</div>
-              <h4>Mỹ phẩm</h4>
-              <p className="text-muted mb-0">
-                Son môi, skincare, nước hoa với phong cách hiện đại.
-              </p>
-            </div>
-          </div>
-
-          <div className="col-lg-3 col-md-6">
-            <div className="category-box">
-              <div className="category-icon">👕</div>
-              <h4>Thời trang</h4>
-              <p className="text-muted mb-0">
-                Áo quần, phụ kiện trẻ trung, phù hợp nhiều phong cách.
-              </p>
-            </div>
-          </div>
-
-          <div className="col-lg-3 col-md-6">
-            <div className="category-box">
-              <div className="category-icon">📚</div>
-              <h4>Sách</h4>
-              <p className="text-muted mb-0">
-                Giáo trình, sách kỹ năng, sách công nghệ cho sinh viên.
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -73,11 +76,28 @@ export default function HomePage() {
         </div>
 
         <div className="row g-4">
-          {featuredProducts.map((product) => (
-            <div className="col-lg-3 col-md-4 col-sm-6" key={product.id}>
-              <ProductCard product={product} />
+          {featuredProducts.length > 0 ? (
+            featuredProducts.map((product) => (
+              <div className="col-lg-3 col-md-4 col-sm-6" key={product.id}>
+                <ProductCard
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    category: product.category?.name || "Chưa có danh mục",
+                    price: product.price,
+                    desc: product.description,
+                    image:
+                      product.images?.[0]?.imageUrl ||
+                      "https://via.placeholder.com/300x300?text=No+Image",
+                  }}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="col-12">
+              <div className="empty-box">Chưa có sản phẩm nổi bật.</div>
             </div>
-          ))}
+          )}
         </div>
       </section>
     </div>

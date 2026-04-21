@@ -1,6 +1,71 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../../services/api";
 
 export default function RegisterPage() {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    address: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.fullName,
+        phone: formData.phone,
+      };
+
+      const res = await api.post("/auth/register", payload);
+
+      if (res.data?.status) {
+        setMessage("Đăng ký thành công, vui lòng kiểm tra email để xác thực tài khoản");
+        setFormData({
+          fullName: "",
+          phone: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          address: "",
+        });
+      } else {
+        setMessage(res.data?.message || "Đăng ký thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi đăng ký:", error);
+      setMessage(
+        error.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
@@ -11,14 +76,18 @@ export default function RegisterPage() {
               Tạo tài khoản mới để mua hàng nhanh hơn và theo dõi đơn hàng dễ hơn.
             </p>
 
-            <form>
+            <form onSubmit={handleRegister}>
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label">Họ và tên</label>
                   <input
                     type="text"
+                    name="fullName"
                     className="form-control"
                     placeholder="Nhập họ tên"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -26,8 +95,11 @@ export default function RegisterPage() {
                   <label className="form-label">Số điện thoại</label>
                   <input
                     type="text"
+                    name="phone"
                     className="form-control"
                     placeholder="Nhập số điện thoại"
+                    value={formData.phone}
+                    onChange={handleChange}
                   />
                 </div>
 
@@ -35,8 +107,12 @@ export default function RegisterPage() {
                   <label className="form-label">Email</label>
                   <input
                     type="email"
+                    name="email"
                     className="form-control"
                     placeholder="Nhập email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -44,8 +120,12 @@ export default function RegisterPage() {
                   <label className="form-label">Mật khẩu</label>
                   <input
                     type="password"
+                    name="password"
                     className="form-control"
                     placeholder="Nhập mật khẩu"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -53,8 +133,12 @@ export default function RegisterPage() {
                   <label className="form-label">Xác nhận mật khẩu</label>
                   <input
                     type="password"
+                    name="confirmPassword"
                     className="form-control"
                     placeholder="Nhập lại mật khẩu"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
                   />
                 </div>
 
@@ -62,14 +146,23 @@ export default function RegisterPage() {
                   <label className="form-label">Địa chỉ</label>
                   <input
                     type="text"
+                    name="address"
                     className="form-control"
                     placeholder="Nhập địa chỉ"
+                    value={formData.address}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
 
-              <button type="button" className="btn btn-product w-100 mt-4">
-                Đăng ký
+              {message && (
+                <div className="alert alert-info mt-3 py-2" role="alert">
+                  {message}
+                </div>
+              )}
+
+              <button type="submit" className="btn btn-product w-100 mt-4" disabled={loading}>
+                {loading ? "Đang đăng ký..." : "Đăng ký"}
               </button>
             </form>
 

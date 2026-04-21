@@ -1,35 +1,59 @@
-import { useMemo, useState } from "react";
-import { mockProducts } from "../../data/mockProducts";
+import { useEffect, useMemo, useState } from "react";
 import ProductCard from "../../components/common/ProductCard";
+import { getAllProducts, getAllCategories } from "../../services/productService";
 
 export default function ProductListPage() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("default");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [productData, categoryData] = await Promise.all([
+          getAllProducts(),
+          getAllCategories(),
+        ]);
+        setProducts(Array.isArray(productData) ? productData : []);
+        setCategories(Array.isArray(categoryData) ? categoryData : []);
+      } catch (error) {
+        console.error("Lỗi lấy dữ liệu sản phẩm:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredProducts = useMemo(() => {
-    let filtered = [...mockProducts];
+    let filtered = [...products];
 
     if (search.trim()) {
       filtered = filtered.filter((product) =>
-        product.name.toLowerCase().includes(search.trim().toLowerCase())
+        product.name?.toLowerCase().includes(search.trim().toLowerCase())
       );
     }
 
     if (category !== "all") {
-      filtered = filtered.filter((product) => product.category === category);
+      filtered = filtered.filter(
+        (product) => String(product.category?.id) === category
+      );
     }
 
     if (sort === "name-asc") {
-      filtered.sort((a, b) => a.name.localeCompare(b.name, "vi"));
+      filtered.sort((a, b) => (a.name || "").localeCompare(b.name || "", "vi"));
     } else if (sort === "price-asc") {
-      filtered.sort((a, b) => a.price - b.price);
+      filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sort === "price-desc") {
-      filtered.sort((a, b) => b.price - a.price);
+      filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
     }
 
     return filtered;
-  }, [search, category, sort]);
+  }, [products, search, category, sort]);
 
   return (
     <div className="container py-4">
@@ -63,10 +87,11 @@ export default function ProductListPage() {
               onChange={(e) => setCategory(e.target.value)}
             >
               <option value="all">Tất cả</option>
-              <option value="Máy tính">Máy tính</option>
-              <option value="Mỹ phẩm">Mỹ phẩm</option>
-              <option value="Thời trang">Thời trang</option>
-              <option value="Sách">Sách</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={String(cat.id)}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -93,18 +118,31 @@ export default function ProductListPage() {
         </p>
       </div>
 
-      {filteredProducts.length === 0 ? (
+      {loading ? (
+        <div className="empty-box mt-4">
+          <h4 className="mb-2">Đang tải sản phẩm...</h4>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div className="empty-box mt-4">
           <h4 className="mb-2">Không tìm thấy sản phẩm phù hợp</h4>
-          <p className="mb-0">
-            Hãy thử từ khóa khác hoặc chọn lại danh mục.
-          </p>
+          <p className="mb-0">Hãy thử từ khóa khác hoặc chọn lại danh mục.</p>
         </div>
       ) : (
         <div className="row g-4">
           {filteredProducts.map((product) => (
             <div className="col-lg-3 col-md-4 col-sm-6" key={product.id}>
-              <ProductCard product={product} />
+              <ProductCard
+                product={{
+                  id: product.id,
+                  name: product.name,
+                  category: product.category?.name || "Chưa có danh mục",
+                  price: product.price,
+                  desc: product.description,
+                  image:
+                    product.images?.[0]?.imageUrl ||
+                    "https://via.placeholder.com/300x300?text=No+Image",
+                }}
+              />
             </div>
           ))}
         </div>
