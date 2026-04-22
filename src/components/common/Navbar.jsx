@@ -40,6 +40,12 @@ export default function Navbar() {
                 Giỏ hàng
               </NavLink>
             </li>
+
+            <li className="nav-item">
+              <NavLink className="nav-link" to="/profile">
+                Tài khoản
+              </NavLink>
+            </li>
           </ul>
 
           <div className="d-flex gap-2 mt-3 mt-lg-0">
