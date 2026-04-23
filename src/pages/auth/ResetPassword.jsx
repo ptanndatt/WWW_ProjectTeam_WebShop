@@ -1,38 +1,43 @@
-import { Form, Input, Button, message } from "antd";
 import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import api from "../../services/api";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
   const token = params.get("token");
 
-  const onFinish = async (values) => {
-    try {
-      await api.post("/auth/reset", {
-        token,
-        password: values.password,
-      });
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
 
-      message.success("Đổi mật khẩu thành công!");
-    } catch {
-      message.error("Token không hợp lệ");
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const res = await api.post("/auth/reset", {
+      token,
+      newPass: password,
+    });
+
+    setMsg(res.data.message);
   };
 
   return (
-    <Form onFinish={onFinish} style={{ maxWidth: 400, margin: "auto" }}>
-      <h2>Đặt lại mật khẩu</h2>
+    <div className="container py-5">
+      <div className="form-box mx-auto" style={{ maxWidth: 400 }}>
+        <h3>Đặt lại mật khẩu</h3>
 
-      <Form.Item
-        name="password"
-        rules={[{ required: true, min: 6, message: ">=6 ký tự" }]}
-      >
-        <Input.Password placeholder="Mật khẩu mới" />
-      </Form.Item>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="password"
+            className="form-control mb-3"
+            placeholder="Mật khẩu mới"
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-      <Button type="primary" htmlType="submit" block>
-        Xác nhận
-      </Button>
-    </Form>
+          <button className="btn btn-danger w-100">Reset</button>
+        </form>
+
+        {msg && <div className="alert alert-info mt-3">{msg}</div>}
+      </div>
+    </div>
   );
 }

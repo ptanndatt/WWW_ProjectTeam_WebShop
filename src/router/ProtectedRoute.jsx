@@ -2,19 +2,17 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children, roleRequired }) {
-  const token = localStorage.getItem("accessToken");
-  const role = localStorage.getItem("role");
+  const { user } = useAuth();
 
-  // ❌ chưa login
-  if (!token) {
+  // chưa login
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // ❌ sai role
-  if (
-    roleRequired &&
-    role !== roleRequired &&
-    !(roleRequired === "USER" && role === "ADMIN")
-  )
-    return children;
+  // sai quyền
+  if (roleRequired && user.role !== roleRequired) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 }

@@ -8,21 +8,24 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await logoutApi(); // gọi BE
-    } catch (e) {
-      console.log("Logout lỗi (bỏ qua)");
-    }
+      await logoutApi();
+    } catch (e) {}
 
-    logout(); // clear context + localStorage
+    logout();
     navigate("/login");
   };
+
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <nav className="navbar navbar-expand-lg navbar-custom sticky-top">
       <div className="container">
+        {/* LOGO */}
         <Link className="navbar-brand d-flex align-items-center gap-2" to="/">
           <div className="logo-box">W</div>
-          <span className="brand-text">WebShop</span>
+          <span className="brand-text">
+            {isAdmin ? "Admin Panel" : "WebShop"}
+          </span>
         </Link>
 
         <button
@@ -37,45 +40,67 @@ export default function Navbar() {
         <div className="collapse navbar-collapse" id="mainNav">
           {/* LEFT MENU */}
           <ul className="navbar-nav me-auto ms-lg-4">
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/">
-                Trang chủ
-              </NavLink>
-            </li>
+            {/* ===== ADMIN MENU ===== */}
+            {isAdmin ? (
+              <>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/admin/dashboard">
+                    Dashboard
+                  </NavLink>
+                </li>
 
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/products">
-                Sản phẩm
-              </NavLink>
-            </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/admin/products">
+                    Sản phẩm
+                  </NavLink>
+                </li>
 
-            <li className="nav-item">
-              <NavLink className="nav-link" to="/cart">
-                Giỏ hàng
-              </NavLink>
-            </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/admin/categories">
+                    Danh mục
+                  </NavLink>
+                </li>
 
-            {/* USER */}
-            {user && user.role === "USER" && (
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/profile">
-                  Tài khoản
-                </NavLink>
-              </li>
-            )}
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/admin/orders">
+                    Đơn hàng
+                  </NavLink>
+                </li>
+              </>
+            ) : (
+              /* ===== USER MENU ===== */
+              <>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/">
+                    Trang chủ
+                  </NavLink>
+                </li>
 
-            {/* ADMIN */}
-            {user && user.role === "ADMIN" && (
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/admin/orders">
-                  Quản lý
-                </NavLink>
-              </li>
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/products">
+                    Sản phẩm
+                  </NavLink>
+                </li>
+
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/cart">
+                    Giỏ hàng
+                  </NavLink>
+                </li>
+
+                {user?.role === "USER" && (
+                  <li className="nav-item">
+                    <NavLink className="nav-link" to="/profile">
+                      Tài khoản
+                    </NavLink>
+                  </li>
+                )}
+              </>
             )}
           </ul>
 
           {/* RIGHT */}
-          <div className="d-flex gap-2 mt-3 mt-lg-0">
+          <div className="d-flex align-items-center gap-2 mt-3 mt-lg-0">
             {!user ? (
               <>
                 <Link className="btn nav-btn-login" to="/login">
@@ -87,8 +112,14 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <span className="d-flex align-items-center text-white me-2">
-                  {user.role}
+                {/* NAME */}
+                <span className="text-white fw-semibold">
+                  👤 {user.fullName || user.email}
+                </span>
+
+                {/* ROLE */}
+                <span className="badge bg-light text-dark">
+                  {isAdmin ? "ADMIN" : "USER"}
                 </span>
 
                 <button className="btn nav-btn-login" onClick={handleLogout}>

@@ -74,6 +74,14 @@ export default function AppRouter() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute roleRequired="ADMIN">
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/products"
