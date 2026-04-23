@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
+import { login as loginApi } from "../../services/authService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -26,28 +28,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", formData);
+      const data = await loginApi(formData);
 
-      if (res.data?.status) {
-        localStorage.setItem("accessToken", res.data.accessToken);
-        localStorage.setItem("refreshToken", res.data.refreshToken);
-        localStorage.setItem("role", res.data.role);
+      if (data?.status) {
+        login(data); // 🔥 context
 
-        setMessage("Đăng nhập thành công");
-
-        if (res.data.role === "ADMIN") {
+        if (data.role === "ROLE_ADMIN") {
           navigate("/admin/orders");
         } else {
           navigate("/");
         }
       } else {
-        setMessage(res.data?.message || "Đăng nhập thất bại");
+        setMessage(data?.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      console.error("Lỗi đăng nhập:", error);
-      setMessage(
-        error.response?.data?.message || "Đăng nhập thất bại, vui lòng thử lại"
-      );
+      setMessage(error.response?.data?.message || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }
@@ -59,50 +54,35 @@ export default function LoginPage() {
         <div className="col-lg-5 col-md-7">
           <div className="form-box">
             <h2>Đăng nhập</h2>
-            <p className="page-subtitle">
-              Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng.
-            </p>
 
             <form onSubmit={handleLogin}>
-              <div className="mb-3">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="form-control"
-                  placeholder="Nhập email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+              <input
+                type="email"
+                name="email"
+                className="form-control mb-3"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+              />
 
-              <div className="mb-3">
-                <label className="form-label">Mật khẩu</label>
-                <input
-                  type="password"
-                  name="password"
-                  className="form-control"
-                  placeholder="Nhập mật khẩu"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+              <input
+                type="password"
+                name="password"
+                className="form-control mb-3"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+              />
 
-              {message && (
-                <div className="alert alert-info py-2" role="alert">
-                  {message}
-                </div>
-              )}
+              {message && <div className="alert alert-info">{message}</div>}
 
-              <button type="submit" className="btn btn-product w-100" disabled={loading}>
-                {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+              <button className="btn btn-primary w-100">
+                {loading ? "Loading..." : "Login"}
               </button>
             </form>
 
-            <p className="mt-3 mb-0 text-center">
-              Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+            <p className="mt-3">
+              Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
             </p>
           </div>
         </div>

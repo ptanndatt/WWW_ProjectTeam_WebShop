@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../../services/api";
+import { register } from "../../services/authService";
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -30,6 +32,10 @@ export default function RegisterPage() {
       setMessage("Mật khẩu xác nhận không khớp");
       return;
     }
+    if (formData.password.length < 6) {
+      setMessage("Mật khẩu phải >= 6 ký tự");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -41,10 +47,16 @@ export default function RegisterPage() {
         phone: formData.phone,
       };
 
-      const res = await api.post("/auth/register", payload);
+      const data = await register(payload);
 
-      if (res.data?.status) {
-        setMessage("Đăng ký thành công, vui lòng kiểm tra email để xác thực tài khoản");
+      if (data?.status) {
+        setMessage(
+          "Đăng ký thành công, vui lòng kiểm tra email để xác thực tài khoản",
+        );
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+
         setFormData({
           fullName: "",
           phone: "",
@@ -54,13 +66,10 @@ export default function RegisterPage() {
           address: "",
         });
       } else {
-        setMessage(res.data?.message || "Đăng ký thất bại");
+        setMessage(data?.message || "Đăng ký thất bại");
       }
     } catch (error) {
-      console.error("Lỗi đăng ký:", error);
-      setMessage(
-        error.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại"
-      );
+      setMessage(error.response?.data?.message || "Đăng ký thất bại");
     } finally {
       setLoading(false);
     }
@@ -73,7 +82,8 @@ export default function RegisterPage() {
           <div className="form-box">
             <h2>Đăng ký tài khoản</h2>
             <p className="page-subtitle">
-              Tạo tài khoản mới để mua hàng nhanh hơn và theo dõi đơn hàng dễ hơn.
+              Tạo tài khoản mới để mua hàng nhanh hơn và theo dõi đơn hàng dễ
+              hơn.
             </p>
 
             <form onSubmit={handleRegister}>
@@ -161,7 +171,11 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              <button type="submit" className="btn btn-product w-100 mt-4" disabled={loading}>
+              <button
+                type="submit"
+                className="btn btn-product w-100 mt-4"
+                disabled={loading}
+              >
                 {loading ? "Đang đăng ký..." : "Đăng ký"}
               </button>
             </form>

@@ -48,7 +48,10 @@ export default function CheckoutPage() {
   const items = cart?.cartItems || cart?.items || [];
   const subTotal =
     cart?.totalAmount ||
-    items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
+    items.reduce(
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+      0,
+    );
 
   const shippingFee = 30000;
   const total = subTotal + shippingFee;
